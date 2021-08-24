@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>WebSocket Echo Demo</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://bit.ly/cdn-bootstrap-css">
+<link rel="stylesheet" href="http://bit.ly/cdn-bootstrap-theme">
+<script src="http://bit.ly/cdn-bootstrap-jq"></script>
+<script>
+  const ws = new WebSocket('ws://localhost:8181');
+  ws.onopen = () => console.log('Connection to server opened!');
+  
+  let nickname = '';
+
+  const appendLog = (type, nickname, message) => {
+    const messages = document.getElementById('messages');
+    const messageElement = document.createElement('li');
+    let prefaceLabel;
+    if (type === 'notification') {
+      prefaceLabel = `<span class='label label-info'>*</span>`;
+    } else if (type === 'nick_update') {
+      prefaceLabel = `<span class='label label-warning'>*</span>`;
+    } else {
+      prefaceLabel = `<span class='label label-success'>${nickname}</span>`;
+    }
+
+    const messageText = `<h2>${prefaceLabel}&nbsp;&nbsp;${message}</h2>`
+    messageElement.innerHTML = messageText;
+    messages.appendChild(messageElement);
+  };
+
+  ws.onmessage = e => {
+    const data = JSON.parse(e.data);
+    console.log(data);
+    appendLog(data.type, data.nickname, data.message);
+    console.log(`ID: ${data.id} = ${data.message}`);
+  };
+
+  ws.onclose = () => {
+    appendLog('Connection closed!');
+    console.log('Connection closed');
+  };
+
+  const sendMessage = () => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send($('#message').val().toString());
+    }
+    $('#message').val('');
+    $('#message').focus();
+  };
+
+  const disconnect = () => ws.close();
+</script>
+</head>
+<body lang="en">
+  <div class="vertical-center">
+    <div class="container">
+      <ul id='messages' class='list-unstyled'>
+
+      </ul>
+      <hr />
+      <form role="form" id="chat_form" onsubmit="sendMessage(); return false;">
+        <div class="form-group">
+        <input class="form-control" type="text" name="message" id="message"
+          placeholder="Type text to echo in here" value="" autofocus/>
+        </div>
+        <button type="button" id="send" class="btn btn-primary"
+          onclick="sendMessage();">Send!</button>
+      </form>
+    </div>
+  </div>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</body>
+</html>
